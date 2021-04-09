@@ -1,0 +1,32 @@
+image: sirehna/dind
+
+services:
+    - docker:dind
+
+before_script:
+  - git submodule sync --recursive
+  - git submodule update --init --recursive
+
+stages:
+  - build
+  - deploy
+
+build:
+    stage: build
+    before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    script:
+    - docker build --pull --cache-from sirehna/base-image-debian10-gcc8-xdyn --tag sirehna/base-image-debian10-gcc8-xdyn .
+    - docker push "sirehna/base-image-debian10-gcc8-xdyn:latest"
+    except:
+    - master
+
+deploy:
+    stage: deploy
+    before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    script:
+    - docker build --pull --cache-from sirehna/base-image-debian10-gcc8-xdyn --tag sirehna/base-image-debian10-gcc8-xdyn .
+    - docker push "sirehna/base-image-debian10-gcc8-xdyn:$CI_COMMIT_REF_SLUG"
+    only:
+    - master
